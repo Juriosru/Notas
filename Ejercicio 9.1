@@ -1,0 +1,72 @@
+import tkinter as tk
+from tkinter import messagebox
+from tkcalendar import DateEntry
+
+# Crear ventana principal
+ventana = tk.Tk()
+ventana.title("Agenda de Contactos")
+ventana.geometry("600x500")
+
+# -------- Etiquetas y campos --------
+tk.Label(ventana, text="Nombres:").grid(row=0, column=0, padx=10, pady=5, sticky="w")
+entry_nombres = tk.Entry(ventana, width=30)
+entry_nombres.grid(row=0, column=1, padx=10)
+
+tk.Label(ventana, text="Apellidos:").grid(row=1, column=0, padx=10, pady=5, sticky="w")
+entry_apellidos = tk.Entry(ventana, width=30)
+entry_apellidos.grid(row=1, column=1, padx=10)
+
+tk.Label(ventana, text="Fecha de Nacimiento:").grid(row=2, column=0, padx=10, pady=5, sticky="w")
+fecha_nacimiento = DateEntry(
+    ventana,
+    width=28,
+    background="darkblue",
+    foreground="white",
+    date_pattern="yyyy-mm-dd"
+)
+fecha_nacimiento.grid(row=2, column=1, padx=10)
+
+tk.Label(ventana, text="Dirección:").grid(row=3, column=0, padx=10, pady=5, sticky="w")
+entry_direccion = tk.Entry(ventana, width=30)
+entry_direccion.grid(row=3, column=1, padx=10)
+
+tk.Label(ventana, text="Teléfono:").grid(row=4, column=0, padx=10, pady=5, sticky="w")
+entry_telefono = tk.Entry(ventana, width=30)
+entry_telefono.grid(row=4, column=1, padx=10)
+
+tk.Label(ventana, text="Correo electrónico:").grid(row=5, column=0, padx=10, pady=5, sticky="w")
+entry_correo = tk.Entry(ventana, width=30)
+entry_correo.grid(row=5, column=1, padx=10)
+
+# -------- Función --------
+def agregar_contacto():
+    nombres = entry_nombres.get()
+    apellidos = entry_apellidos.get()
+    fecha = fecha_nacimiento.get()
+    telefono = entry_telefono.get()
+    correo = entry_correo.get()
+
+    if not nombres or not apellidos:
+        messagebox.showerror("Error", "Ingrese nombres y apellidos")
+        return
+
+    contacto = f"{nombres} {apellidos} | {fecha} | {telefono} | {correo}"
+    lista_contactos.insert(tk.END, contacto)
+
+    entry_nombres.delete(0, tk.END)
+    entry_apellidos.delete(0, tk.END)
+    entry_direccion.delete(0, tk.END)
+    entry_telefono.delete(0, tk.END)
+    entry_correo.delete(0, tk.END)
+
+# -------- Botón --------
+tk.Button(ventana, text="Agregar", width=15, command=agregar_contacto)\
+    .grid(row=6, columnspan=2, pady=15)
+
+# -------- Lista --------
+tk.Label(ventana, text="Contactos:").grid(row=7, column=0, padx=10, sticky="w")
+lista_contactos = tk.Listbox(ventana, width=80, height=10)
+lista_contactos.grid(row=8, column=0, columnspan=2, padx=10, pady=10)
+
+# Ejecutar
+ventana.mainloop()
