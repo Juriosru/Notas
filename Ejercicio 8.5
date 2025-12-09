@@ -1,0 +1,201 @@
+import tkinter as tk
+from tkinter import ttk, messagebox
+from datetime import datetime
+
+class Habitacion:
+    def __init__(self, numero, precio):
+        self.numero = numero
+        self.precio = precio
+        self.disponible = True
+        self.huesped = None
+        self.fecha_ingreso = None
+
+class Huesped:
+    def __init__(self, nombre, apellidos, documento):
+        self.nombre = nombre
+        self.apellidos = apellidos
+        self.documento = documento
+
+class HotelApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Gestión Hotel")
+
+        
+        self.habitaciones = []
+        for i in range(1, 11):
+            precio = 120000 if i <= 5 else 160000
+            self.habitaciones.append(Habitacion(i, precio))
+
+        
+        menu_principal = tk.Menu(root)
+        root.config(menu=menu_principal)
+
+        opciones = tk.Menu(menu_principal, tearoff=0)
+        menu_principal.add_cascade(label="Opciones", menu=opciones)
+
+        opciones.add_command(label="Consultar habitaciones", command=self.consultar_habitaciones)
+        opciones.add_command(label="Salida de huésped", command=self.salida_huesped)
+
+    
+
+    def consultar_habitaciones(self):
+        ventana = tk.Toplevel(self.root)
+        ventana.title("Consultar Habitaciones")
+        ventana.geometry("500x300")
+
+        tabla = ttk.Treeview(ventana, columns=("num","precio","estado"), show="headings")
+        tabla.heading("num", text="Habitación")
+        tabla.heading("precio", text="Precio por día")
+        tabla.heading("estado", text="Estado")
+
+        tabla.pack(fill="both", expand=True)
+
+        for h in self.habitaciones:
+            estado = "Disponible" if h.disponible else "No disponible"
+            tabla.insert("", tk.END, values=(h.numero, h.precio, estado))
+
+        
+        tk.Label(ventana, text="Número de habitación a ocupar:").pack()
+        entrada_num = tk.Entry(ventana)
+        entrada_num.pack()
+
+        def registrar():
+            try:
+                num = int(entrada_num.get())
+                if num < 1 or num > 10:
+                    messagebox.showerror("Error", "Número de habitación inválido")
+                    return
+
+                hab = self.habitaciones[num - 1]
+                if not hab.disponible:
+                    messagebox.showerror("Error", "Habitación ocupada")
+                    return
+
+                self.form_ingreso(hab)
+                ventana.destroy()
+
+            except:
+                messagebox.showerror("Error", "Número inválido")
+
+        tk.Button(ventana, text="Registrar ingreso", command=registrar).pack(pady=10)
+
+    
+
+    def form_ingreso(self, habitacion):
+        ventana = tk.Toplevel(self.root)
+        ventana.title(f"Ingreso Habitación {habitacion.numero}")
+        ventana.geometry("350x300")
+
+        tk.Label(ventana, text="Fecha ingreso (dd/mm/yyyy):").pack()
+        fecha_entry = tk.Entry(ventana)
+        fecha_entry.pack()
+
+        tk.Label(ventana, text="Nombre:").pack()
+        nombre_entry = tk.Entry(ventana)
+        nombre_entry.pack()
+
+        tk.Label(ventana, text="Apellidos:").pack()
+        apellidos_entry = tk.Entry(ventana)
+        apellidos_entry.pack()
+
+        tk.Label(ventana, text="Documento:").pack()
+        doc_entry = tk.Entry(ventana)
+        doc_entry.pack()
+
+        def guardar_ingreso():
+            try:
+                fecha = datetime.strptime(fecha_entry.get(), "%d/%m/%Y")
+            except:
+                messagebox.showerror("Error", "Fecha inválida")
+                return
+
+            if not nombre_entry.get() or not apellidos_entry.get() or not doc_entry.get():
+                messagebox.showerror("Error", "Todos los campos son obligatorios")
+                return
+
+            habitacion.disponible = False
+            habitacion.fecha_ingreso = fecha
+            habitacion.huesped = Huesped(nombre_entry.get(), apellidos_entry.get(), doc_entry.get())
+
+            messagebox.showinfo("OK", "Ingreso registrado correctamente")
+            ventana.destroy()
+
+        tk.Button(ventana, text="Registrar ingreso", command=guardar_ingreso).pack(pady=10)
+
+    
+
+    def salida_huesped(self):
+        ventana = tk.Toplevel(self.root)
+        ventana.title("Salida de Huésped")
+        ventana.geometry("350x200")
+
+        tk.Label(ventana, text="Número de habitación a entregar:").pack()
+        entrada = tk.Entry(ventana)
+        entrada.pack()
+
+        def procesar():
+            try:
+                num = int(entrada.get())
+                if num < 1 or num > 10:
+                    messagebox.showerror("Error", "Número de habitación inválido")
+                    return
+
+                hab = self.habitaciones[num - 1]
+
+                if hab.disponible:
+                    messagebox.showerror("Error", "La habitación no está ocupada")
+                    return
+
+                self.form_salida(hab)
+                ventana.destroy()
+
+            except:
+                messagebox.showerror("Error", "Número inválido")
+
+        tk.Button(ventana, text="Continuar", command=procesar).pack(pady=10)
+
+   
+
+    def form_salida(self, habitacion):
+        ventana = tk.Toplevel(self.root)
+        ventana.title(f"Salida Habitación {habitacion.numero}")
+        ventana.geometry("350x250")
+
+        tk.Label(ventana, text="Fecha salida (dd/mm/yyyy):").pack()
+        fecha_salida_entry = tk.Entry(ventana)
+        fecha_salida_entry.pack()
+
+        def calcular():
+            try:
+                fecha_salida = datetime.strptime(fecha_salida_entry.get(), "%d/%m/%Y")
+            except:
+                messagebox.showerror("Error", "Fecha inválida")
+                return
+
+            if fecha_salida <= habitacion.fecha_ingreso:
+                messagebox.showerror("Error", "La fecha de salida debe ser posterior a la de ingreso")
+                return
+
+            dias = (fecha_salida - habitacion.fecha_ingreso).days
+            total = dias * habitacion.precio
+
+            messagebox.showinfo("Total a Pagar",
+                                f"Días alojado: {dias}\n"
+                                f"Precio por día: {habitacion.precio}\n"
+                                f"Total: {total}")
+
+            # Registrar salida
+            habitacion.disponible = True
+            habitacion.huesped = None
+            habitacion.fecha_ingreso = None
+
+            ventana.destroy()
+
+        tk.Button(ventana, text="Registrar salida", command=calcular).pack(pady=10)
+
+
+
+root = tk.Tk()
+HotelApp(root)
+root.mainloop()
