@@ -1,0 +1,130 @@
+import tkinter as tk
+from tkinter import ttk, filedialog, messagebox
+
+class Empleado:
+    def __init__(self, nombre, apellidos, cargo, genero, salario_dia,
+                 dias_trabajados, otros_ingresos, salud, pension):
+        self.nombre = nombre
+        self.apellidos = apellidos
+        self.cargo = cargo
+        self.genero = genero
+        self.salario_dia = salario_dia
+        self.dias_trabajados = dias_trabajados
+        self.otros_ingresos = otros_ingresos
+        self.salud = salud
+        self.pension = pension
+
+    def salario_mensual(self):
+        return (self.dias_trabajados * self.salario_dia) + self.otros_ingresos - self.salud - self.pension
+
+
+class NominaApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Nómina Empresa")
+        self.empleados = []
+
+        barra_menu = tk.Menu(self.root)
+        self.root.config(menu=barra_menu)
+
+        menu_opciones = tk.Menu(barra_menu, tearoff=0)
+        barra_menu.add_cascade(label="Opciones", menu=menu_opciones)
+
+        menu_opciones.add_command(label="Agregar empleado", command=self.ventana_agregar)
+        menu_opciones.add_command(label="Calcular nómina", command=self.ventana_nomina)
+        menu_opciones.add_command(label="Guardar archivo", command=self.guardar_archivo)
+
+    
+
+    def ventana_agregar(self):
+        ventana = tk.Toplevel(self.root)
+        ventana.title("Agregar Empleado")
+        ventana.geometry("350x420")
+
+        labels = ["Nombre", "Apellidos", "Cargo (directivo/estratégico/operativo)",
+                  "Género (M/F)", "Salario por día", "Días trabajados (1-31)",
+                  "Otros ingresos", "Pago salud", "Aporte pensión"]
+
+        entries = []
+        for i, texto in enumerate(labels):
+            tk.Label(ventana, text=texto).pack()
+            entry = tk.Entry(ventana)
+            entry.pack()
+            entries.append(entry)
+
+        def guardar():
+            try:
+                nuevo = Empleado(
+                    entries[0].get(),
+                    entries[1].get(),
+                    entries[2].get(),
+                    entries[3].get(),
+                    float(entries[4].get()),
+                    int(entries[5].get()),
+                    float(entries[6].get()),
+                    float(entries[7].get()),
+                    float(entries[8].get())
+                )
+                self.empleados.append(nuevo)
+                messagebox.showinfo("OK", "Empleado agregado correctamente")
+                ventana.destroy()
+            except:
+                messagebox.showerror("Error", "Datos inválidos")
+
+        tk.Button(ventana, text="Guardar empleado", command=guardar).pack(pady=10)
+
+    
+
+    def ventana_nomina(self):
+        ventana = tk.Toplevel(self.root)
+        ventana.title("Nómina Calculada")
+        ventana.geometry("600x400")
+
+        tabla = ttk.Treeview(ventana, columns=("nombre","apellidos","salario"), show="headings")
+        tabla.heading("nombre", text="Nombre")
+        tabla.heading("apellidos", text="Apellidos")
+        tabla.heading("salario", text="Salario mensual")
+
+        tabla.pack(fill="both", expand=True)
+
+        total_nomina = 0
+
+        for e in self.empleados:
+            salario = e.salario_mensual()
+            total_nomina += salario
+            tabla.insert("", tk.END, values=(e.nombre, e.apellidos, round(salario,2)))
+
+        tk.Label(ventana, text=f"TOTAL NÓMINA = {round(total_nomina,2)}").pack(pady=10)
+
+   
+
+    def guardar_archivo(self):
+        if not self.empleados:
+            messagebox.showwarning("Advertencia", "No hay empleados para guardar.")
+            return
+
+        carpeta = filedialog.askdirectory()
+        if carpeta == "":
+            return
+
+        ruta = carpeta + "/Nómina.txt"
+
+        with open(ruta, "w", encoding="utf-8") as archivo:
+            total = 0
+            for e in self.empleados:
+                salario = e.salario_mensual()
+                total += salario
+                archivo.write(
+                    f"{e.nombre} {e.apellidos} | Cargo: {e.cargo} | Salario mensual: {round(salario,2)}\n"
+                )
+
+            archivo.write(f"\nTOTAL NÓMINA EMPRESA: {round(total,2)}\n")
+
+        messagebox.showinfo("Archivo Guardado", f"Archivo creado en:\n{ruta}")
+
+
+
+
+root = tk.Tk()
+app = NominaApp(root)
+root.mainloop()
